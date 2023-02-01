@@ -66,7 +66,7 @@ end
 
 function Library:ResizeSection(Section)
 	local SectionContainer = Section:WaitForChild("SectionContainer")
-	
+
 	local NumChild = 0
 	local ChildOffset = 0
 
@@ -86,7 +86,7 @@ function Library:ResizeSection(Section)
 		Length = 0.5,
 		Goal = {Size = UDim2.new(0, 458, 0, ContainerSize)}
 	})
-	
+
 	Library:Tween(Section, {
 		Length = 0.5,
 		Goal = {Size = UDim2.new(0, 458, 0, SectionSize)}
@@ -133,6 +133,42 @@ do
 	LibFrame["83"] = Instance.new("UIPadding", LibFrame["81"])
 	LibFrame["83"]["PaddingRight"] = UDim.new(0, 40)
 	LibFrame["83"]["PaddingBottom"] = UDim.new(0, 40)
+end
+
+function Library:ToolTip(Text)
+	local ToolTip = {}
+
+	do
+		-- StarterGui.ScreenGui.ToolTip
+		ToolTip["2"] = Instance.new("TextLabel", LibFrame["1"])
+		ToolTip["2"]["BorderSizePixel"] = 0
+		ToolTip["2"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+		ToolTip["2"]["TextSize"] = 12
+		ToolTip["2"]["Text"] = Text
+		ToolTip["2"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+		ToolTip["2"]["Size"] = UDim2.new(0, 68, 0, 18)
+		ToolTip["2"]["Name"] = [[ToolTip]]
+		ToolTip["2"]["Font"] = Enum.Font.Gotham
+		ToolTip["2"]["BackgroundTransparency"] = 0.5
+		ToolTip["2"]["Position"] = UDim2.new(0, Mouse.X, 0, Mouse.Y)
+	end
+	
+	local Bound = TextService:GetTextSize(ToolTip["2"].Text, ToolTip["2"].TextSize, ToolTip["2"].Font, Vector2.new(ToolTip["2"].AbsoluteSize.X,ToolTip["2"].AbsoluteSize.Y))
+	ToolTip["2"].Size = UDim2.new(0, (Bound.X + 28), 0, 18)
+	
+	local RSSync = RunService.Heartbeat:Connect(function()
+		ToolTip["2"].Position = UDim2.new(0, Mouse.X, 0, Mouse.Y)
+		
+	end)
+
+	do
+		function ToolTip:Destroy()
+			RSSync:Disconnect()
+			ToolTip["2"]:Destroy()
+		end
+	end
+
+	return ToolTip
 end
 
 function Library:Create(options)
@@ -317,6 +353,85 @@ function Library:Create(options)
 		Gui["1c"]["BackgroundTransparency"] = 1
 		Gui["1c"]["Position"] = UDim2.new(0, 14, 0, 5)
 	end
+	
+	function Library:ResizeTabCanvas()
+		local NumChild = 0
+		local ChildOffset = 0
+
+		for i, v in pairs(Gui["6"]:GetChildren()) do
+			if v:IsA("Frame") then
+				NumChild += 1
+				ChildOffset = ChildOffset + v.Size.X.Offset
+			end
+		end
+
+		local NumChildOffset = NumChild * 7
+
+		local CanvasSizeX = NumChildOffset + ChildOffset + 7
+
+		Library:Tween(Gui["6"], {
+			Length = 0.5,
+			Goal = {CanvasSize = UDim2.new(0, CanvasSizeX, 0, 0)}
+		})
+		
+		task.spawn(function()
+			task.wait(1)
+
+			local MaxPos = Gui["6"].CanvasSize.X.Offset - Gui["6"].Size.X.Offset
+
+			if Gui["6"].CanvasPosition.X > 0 then
+				Library:Tween(Gui["15"], {
+					Length = 0.1,
+					Goal = {TextColor3 = Color3.fromRGB(255, 255, 255)}
+				})
+			else
+				Library:Tween(Gui["15"], {
+					Length = 0.1,
+					Goal = {TextColor3 = Color3.fromRGB(96, 96, 96)}
+				})
+			end
+
+			if Gui["6"].CanvasPosition.X < MaxPos then
+				Library:Tween(Gui["16"], {
+					Length = 0.1,
+					Goal = {TextColor3 = Color3.fromRGB(255, 255, 255)}
+				})
+			else
+				Library:Tween(Gui["16"], {
+					Length = 0.1,
+					Goal = {TextColor3 = Color3.fromRGB(96, 96, 96)}
+				})
+			end
+		end)
+	end
+	
+	Gui["6"]:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+		local MaxPos = Gui["6"].CanvasSize.X.Offset - Gui["6"].Size.X.Offset
+
+		if Gui["6"].CanvasPosition.X > 0 then
+			Library:Tween(Gui["15"], {
+				Length = 0.1,
+				Goal = {TextColor3 = Color3.fromRGB(255, 255, 255)}
+			})
+		else
+			Library:Tween(Gui["15"], {
+				Length = 0.1,
+				Goal = {TextColor3 = Color3.fromRGB(96, 96, 96)}
+			})
+		end
+
+		if Gui["6"].CanvasPosition.X < MaxPos then
+			Library:Tween(Gui["16"], {
+				Length = 0.1,
+				Goal = {TextColor3 = Color3.fromRGB(255, 255, 255)}
+			})
+		else
+			Library:Tween(Gui["16"], {
+				Length = 0.1,
+				Goal = {TextColor3 = Color3.fromRGB(96, 96, 96)}
+			})
+		end
+	end)
 	
 	do
 		
@@ -1108,6 +1223,10 @@ function Library:Create(options)
 				Section["7b"]["Color"] = Color3.fromRGB(43, 43, 43)
 			end
 			
+			Section["1e"]:GetPropertyChangedSignal("Size"):Connect(function()
+				Library:ResizeCanvas(Tab["1d"])
+			end)
+			
 			function Section:Button(options)
 				options = Library:Place_Defaults({
 					Name = "Button",
@@ -1230,9 +1349,12 @@ function Library:Create(options)
 					end
 				end
 				
+				Button["74"]:GetPropertyChangedSignal("Size"):Connect(function()
+					Library:ResizeSection(Section["1e"])
+				end)	
+				
 				task.spawn(function()
 					Library:ResizeSection(Section["1e"])
-					task.wait(1)
 					Library:ResizeCanvas(Tab["1d"])
 				end)
 				
@@ -1322,7 +1444,11 @@ function Library:Create(options)
 					Toggle["2e"] = Instance.new("UIStroke", Toggle["24"])
 					Toggle["2e"]["Color"] = Color3.fromRGB(43, 43, 43)
 				end
-
+				
+				Toggle["24"]:GetPropertyChangedSignal("Size"):Connect(function()
+					Library:ResizeSection(Section["1e"])
+				end)	
+				
 				-- Handler
 				do
 					Toggle["24"].MouseEnter:Connect(function()
@@ -1428,7 +1554,6 @@ function Library:Create(options)
 				
 				task.spawn(function()
 					Library:ResizeSection(Section["1e"])
-					task.wait(1)
 					Library:ResizeCanvas(Tab["1d"])
 				end)
 
@@ -1532,6 +1657,10 @@ function Library:Create(options)
 					Slider["3g"]["Font"] = Enum.Font.Gotham
 					Slider["3g"]["BorderSizePixel"] = 0
 				end
+				
+				Slider["36"]:GetPropertyChangedSignal("Size"):Connect(function()
+					Library:ResizeSection(Section["1e"])
+				end)	
 
 				-- Handler
 				do
@@ -1638,11 +1767,9 @@ function Library:Create(options)
 						Slider["39"]["Text"] = name
 					end
 				end
-
+				
 				task.spawn(function()
-					Slider:SetValue(options.Default)
 					Library:ResizeSection(Section["1e"])
-					task.wait(1)
 					Library:ResizeCanvas(Tab["1d"])
 				end)
 
@@ -1731,6 +1858,10 @@ function Library:Create(options)
 
 					Keybind["60"]["Text"] = keybindText
 				end
+				
+				Keybind["59"]:GetPropertyChangedSignal("Size"):Connect(function()
+					Library:ResizeSection(Section["1e"])
+				end)	
 
 				-- Methods
 				do
@@ -1781,13 +1912,12 @@ function Library:Create(options)
 						Keybind["5c"]["Text"] = name
 					end
 				end
-
+				
 				task.spawn(function()
 					Library:ResizeSection(Section["1e"])
-					task.wait(1)
 					Library:ResizeCanvas(Tab["1d"])
 				end)
-				
+
 				return Keybind
 			end
 			
@@ -1872,7 +2002,11 @@ function Library:Create(options)
 					Textbox["37"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Right
 					Textbox["37"]["SortOrder"] = Enum.SortOrder.LayoutOrder
 				end
-
+				
+				Textbox["2e"]:GetPropertyChangedSignal("Size"):Connect(function()
+					Library:ResizeSection(Section["1e"])
+				end)	
+				
 				-- Handler
 				do			
 					Textbox["2e"].MouseEnter:Connect(function()
@@ -1949,10 +2083,9 @@ function Library:Create(options)
 						})
 					end
 				end
-
+				
 				task.spawn(function()
 					Library:ResizeSection(Section["1e"])
-					task.wait(1)
 					Library:ResizeCanvas(Tab["1d"])
 				end)
 
@@ -2064,6 +2197,10 @@ function Library:Create(options)
 					Dropdown["5c"] = Instance.new("UICorner", Dropdown["5b"])
 					Dropdown["5c"]["CornerRadius"] = UDim.new(0, 4)
 				end
+				
+				Dropdown["46"]:GetPropertyChangedSignal("Size"):Connect(function()
+					Library:ResizeSection(Section["1e"])
+				end)	
 
 				-- Handler
 				do					
@@ -2114,23 +2251,28 @@ function Library:Create(options)
 									})
 									
 									task.wait(0.7)
-
-									task.spawn(function()
-										Library:ResizeSection(Section["1e"])
-										task.wait(0.7)
-										Library:ResizeCanvas(Tab["1d"])
-									end)
 								else
 									Dropdown.ContainerOpened = true
 									
-									Dropdown:ResizeOpenedFrame()
+									do
+										local NumChild = 0
+
+										for i, v in pairs(Dropdown["4b"]:GetChildren()) do
+											if v:IsA("Frame") then
+												NumChild += 1
+											end
+										end
+
+										local FrameYOffset = 27 * NumChild + 4 * NumChild + 38
+
+										Library:Tween(Dropdown["46"], {
+											Length = 0.5,
+											Goal = {Size = UDim2.fromOffset(423, FrameYOffset)}
+										})
+									end
 								end
 
 								task.wait(0.7)
-
-								task.spawn(function()
-									Library:ResizeCanvas(Tab["1d"])
-								end)
 							end
 						end
 					end)
@@ -2245,18 +2387,6 @@ function Library:Create(options)
 								Goal = {Size = UDim2.new(0, (Bound.X + 14), 0, 21)}
 							})
 						end
-						
-						if Dropdown.ContainerOpened then
-							Dropdown:ResizeOpenedFrame()
-						end
-
-						task.wait(0.6)
-
-						task.spawn(function()
-							Library:ResizeSection(Section["1e"])
-							task.wait(1)
-							Library:ResizeCanvas(Tab["1d"])
-						end)
 					end
 					
 					function Dropdown:Clear()
@@ -2267,18 +2397,6 @@ function Library:Create(options)
 						end
 						
 						local FrameYOffset = 34 + 4
-
-						if Dropdown.ContainerOpened then
-							Dropdown:ResizeOpenedFrame()
-						end
-						
-						task.wait(0.6)
-						
-						task.spawn(function()
-							Library:ResizeSection(Section["1e"])
-							task.wait(1)
-							Library:ResizeCanvas(Tab["1d"])
-						end)
 					end
 					
 					function Dropdown:UpdateList(options)
@@ -2298,84 +2416,6 @@ function Library:Create(options)
 						for i, v in pairs(options.Items) do
 							Dropdown:AddItem(v)
 						end
-						
-						if Dropdown.ContainerOpened then
-							Dropdown:ResizeOpenedFrame()
-						end
-
-						task.wait(0.6)
-
-						task.spawn(function()
-							Library:ResizeSection(Section["1e"])
-							task.wait(1)
-							Library:ResizeCanvas(Tab["1d"])
-						end)
-					end
-					
-					function Dropdown:ResizeOpenedFrame()
-						local FrameYOffset
-
-						do
-							local NumChild = 0
-
-							for i, v in pairs(Dropdown["4b"]:GetChildren()) do
-								if v:IsA("Frame") then
-									NumChild += 1
-								end
-							end
-
-							FrameYOffset = 27 * NumChild + 4 * NumChild + 4
-						end
-						
-						local SectionContainer = Section["21"]
-
-						local NumChild = 0
-						local ChildOffset = 0
-
-						for i, v in pairs(SectionContainer:GetChildren()) do
-							if v:IsA("Frame") then
-								NumChild += 1
-								ChildOffset = ChildOffset + v.Size.Y.Offset
-							end
-						end
-
-						local NumChildOffset = NumChild * 5
-
-						if Dropdown.ContainerOpened then
-							NumChildOffset += FrameYOffset
-						else
-							NumChildOffset -= FrameYOffset
-						end
-
-						local ContainerSize = NumChildOffset + ChildOffset + 10
-						local SectionSize = ContainerSize + 26
-
-						Library:Tween(SectionContainer, {
-							Length = 0.5,
-							Goal = {Size = UDim2.new(0, 458, 0, ContainerSize)}
-						})
-
-						Library:Tween(Section["1e"], {
-							Length = 0.5,
-							Goal = {Size = UDim2.new(0, 458, 0, SectionSize)}
-						})
-						
-						do
-							local NumChild = 0
-
-							for i, v in pairs(Dropdown["4b"]:GetChildren()) do
-								if v:IsA("Frame") then
-									NumChild += 1
-								end
-							end
-
-							local FrameYOffset = 27 * NumChild + 4 * NumChild + 38
-
-							Library:Tween(Dropdown["46"], {
-								Length = 0.5,
-								Goal = {Size = UDim2.fromOffset(423, FrameYOffset)}
-							})
-						end
 					end
 				end
 				
@@ -2386,10 +2426,9 @@ function Library:Create(options)
 						end
 					end)
 				end
-
+				
 				task.spawn(function()
 					Library:ResizeSection(Section["1e"])
-					task.wait(1)
 					Library:ResizeCanvas(Tab["1d"])
 				end)
 
@@ -2438,6 +2477,10 @@ function Library:Create(options)
 					Label["7c"] = Instance.new("UIStroke", Label["78"])
 					Label["7c"]["Color"] = Color3.fromRGB(43, 43, 43)
 				end
+				
+				Label["78"]:GetPropertyChangedSignal("Size"):Connect(function()
+					Library:ResizeSection(Section["1e"])
+				end)	
 
 				-- Methods
 				do
@@ -2462,13 +2505,570 @@ function Library:Create(options)
 						Label["78"]["Size"] = UDim2.new(0, 423, 0, Label["7b"].TextBounds.Y + 21)
 						Label["7b"]["Size"] = UDim2.new(0, 398, 0, Label["7b"].TextBounds.Y + 21)
 					until Val == Label["7b"].TextBounds.Y
-					
+				end)
+				
+				task.spawn(function()
 					Library:ResizeSection(Section["1e"])
-					task.wait(1)
 					Library:ResizeCanvas(Tab["1d"])
 				end)
 
 				return Label
+			end
+			
+			function Section:Colorpicker(options)
+				options = Library:Place_Defaults({
+					Name = "Colorpicker",
+					DefaultColor = Color3.new(1, 1, 1),
+					Callback = function() return end
+				}, options or {})
+
+				local Colorpicker = {
+					ColorH = 1,
+					ColorS = 1,
+					ColorV = 1,
+					Toggled = false,
+					OldVal = nil
+				}
+
+				do
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker
+					Colorpicker["7d"] = Instance.new("Frame", Section["21"])
+					Colorpicker["7d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["7d"]["Size"] = UDim2.new(0, 423, 0, 34)
+					Colorpicker["7d"]["ClipsDescendants"] = true
+					Colorpicker["7d"]["BorderColor3"] = Color3.fromRGB(28, 43, 54)
+					Colorpicker["7d"]["Position"] = UDim2.new(0, 0, 1.1666666269302368, 0)
+					Colorpicker["7d"]["Name"] = [[Colorpicker]]
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.UICorner
+					Colorpicker["7e"] = Instance.new("UICorner", Colorpicker["7d"])
+					Colorpicker["7e"]["CornerRadius"] = UDim.new(0, 5)
+					
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.UIStroke
+					Colorpicker["4a"] = Instance.new("UIStroke", Colorpicker["7d"])
+					Colorpicker["4a"]["Color"] = Color3.fromRGB(43, 43, 43)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Hue
+					Colorpicker["7f"] = Instance.new("ImageLabel", Colorpicker["7d"])
+					Colorpicker["7f"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["7f"]["AnchorPoint"] = Vector2.new(0.5, 0)
+					Colorpicker["7f"]["Size"] = UDim2.new(0, 14, 0, 148)
+					Colorpicker["7f"]["Name"] = [[Hue]]
+					Colorpicker["7f"]["Position"] = UDim2.new(0, 369, 0, 38)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Hue.HueCorner
+					Colorpicker["80"] = Instance.new("UICorner", Colorpicker["7f"])
+					Colorpicker["80"]["Name"] = [[HueCorner]]
+					Colorpicker["80"]["CornerRadius"] = UDim.new(0, 3)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Hue.HueGradient
+					Colorpicker["81"] = Instance.new("UIGradient", Colorpicker["7f"])
+					Colorpicker["81"]["Name"] = [[HueGradient]]
+					Colorpicker["81"]["Rotation"] = 270
+					Colorpicker["81"]["Color"] = ColorSequence.new{ColorSequenceKeypoint.new(0.000, Color3.fromRGB(255, 0, 5)),ColorSequenceKeypoint.new(0.087, Color3.fromRGB(239, 0, 255)),ColorSequenceKeypoint.new(0.230, Color3.fromRGB(18, 0, 255)),ColorSequenceKeypoint.new(0.443, Color3.fromRGB(3, 176, 255)),ColorSequenceKeypoint.new(0.582, Color3.fromRGB(167, 255, 0)),ColorSequenceKeypoint.new(1.000, Color3.fromRGB(255, 26, 26))}
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Hue.Frame
+					Colorpicker["82"] = Instance.new("Frame", Colorpicker["7f"])
+					Colorpicker["82"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["82"]["Size"] = UDim2.new(0, 25, 0, 5)
+					Colorpicker["82"]["Position"] = UDim2.new(-0.3571428656578064, 0, 0.8500000238418579, 0)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Hue.Frame.UICorner
+					Colorpicker["83"] = Instance.new("UICorner", Colorpicker["82"])
+					Colorpicker["83"]["CornerRadius"] = UDim.new(0, 4)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Color
+					Colorpicker["84"] = Instance.new("ImageLabel", Colorpicker["7d"])
+					Colorpicker["84"]["ZIndex"] = 10
+					Colorpicker["84"]["BackgroundColor3"] = Color3.fromRGB(255, 4, 8)
+					Colorpicker["84"]["AnchorPoint"] = Vector2.new(0.5, 0)
+					Colorpicker["84"]["Image"] = [[rbxassetid://4155801252]]
+					Colorpicker["84"]["Size"] = UDim2.new(0, 300, 0, 148)
+					Colorpicker["84"]["Name"] = [[Color]]
+					Colorpicker["84"]["Position"] = UDim2.new(0, 195, 0, 38)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Color.ColorCorner
+					Colorpicker["85"] = Instance.new("UICorner", Colorpicker["84"])
+					Colorpicker["85"]["Name"] = [[ColorCorner]]
+					Colorpicker["85"]["CornerRadius"] = UDim.new(0, 3)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Color.ColorSelection
+					Colorpicker["86"] = Instance.new("ImageLabel", Colorpicker["84"])
+					Colorpicker["86"]["BorderSizePixel"] = 0
+					Colorpicker["86"]["ScaleType"] = Enum.ScaleType.Fit
+					Colorpicker["86"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["86"]["BorderMode"] = Enum.BorderMode.Inset
+					Colorpicker["86"]["AnchorPoint"] = Vector2.new(0.5, 0.5)
+					Colorpicker["86"]["Image"] = [[http://www.roblox.com/asset/?id=4805639000]]
+					Colorpicker["86"]["Size"] = UDim2.new(0, 18, 0, 18)
+					Colorpicker["86"]["Name"] = [[ColorSelection]]
+					Colorpicker["86"]["BackgroundTransparency"] = 1
+					Colorpicker["86"]["Position"] = UDim2.new(0.8784236311912537, 0, 0.16129031777381897, 0)
+					Colorpicker["86"]["ImageTransparency"] = 1
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.UIGradient
+					Colorpicker["87"] = Instance.new("UIGradient", Colorpicker["7d"])
+					Colorpicker["87"]["Rotation"] = 270
+					Colorpicker["87"]["Color"] = ColorSequence.new{ColorSequenceKeypoint.new(0.000, Color3.fromRGB(40, 40, 40)),ColorSequenceKeypoint.new(1.000, Color3.fromRGB(45, 45, 45))}
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Box
+					Colorpicker["88"] = Instance.new("Frame", Colorpicker["7d"])
+					Colorpicker["88"]["BackgroundColor3"] = Color3.fromRGB(0, 0, 0)
+					Colorpicker["88"]["AnchorPoint"] = Vector2.new(1, 0.5)
+					Colorpicker["88"]["Size"] = UDim2.new(0, 21, 0, 21)
+					Colorpicker["88"]["Position"] = UDim2.new(0, 412, 0, 16)
+					Colorpicker["88"]["Name"] = [[Box]]
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Box.UICorner
+					Colorpicker["89"] = Instance.new("UICorner", Colorpicker["88"])
+					Colorpicker["89"]["CornerRadius"] = UDim.new(0, 4)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.Label
+					Colorpicker["8a"] = Instance.new("TextLabel", Colorpicker["7d"])
+					Colorpicker["8a"]["BorderSizePixel"] = 0
+					Colorpicker["8a"]["TextXAlignment"] = Enum.TextXAlignment.Left
+					Colorpicker["8a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["8a"]["TextSize"] = 13
+					Colorpicker["8a"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["8a"]["Size"] = UDim2.new(0, 301, 0, 33)
+					Colorpicker["8a"]["Text"] = [[Colorpicker]]
+					Colorpicker["8a"]["Name"] = [[Label]]
+					Colorpicker["8a"]["Font"] = Enum.Font.GothamMedium
+					Colorpicker["8a"]["BackgroundTransparency"] = 1
+					Colorpicker["8a"]["Position"] = UDim2.new(0, 21, 0, 0)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder
+					Colorpicker["8b"] = Instance.new("Frame", Colorpicker["7d"])
+					Colorpicker["8b"]["BorderSizePixel"] = 0
+					Colorpicker["8b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["8b"]["BackgroundTransparency"] = 1
+					Colorpicker["8b"]["Size"] = UDim2.new(0, 400, 0, 36)
+					Colorpicker["8b"]["Position"] = UDim2.new(0, 10, 0, 192)
+					Colorpicker["8b"]["Name"] = [[HSVHolder]]
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Hue
+					Colorpicker["8c"] = Instance.new("Frame", Colorpicker["8b"])
+					Colorpicker["8c"]["BorderSizePixel"] = 0
+					Colorpicker["8c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["8c"]["BackgroundTransparency"] = 1
+					Colorpicker["8c"]["Size"] = UDim2.new(0, 91, 0, 37)
+					Colorpicker["8c"]["Name"] = [[Hue]]
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Hue.TextLabel
+					Colorpicker["8d"] = Instance.new("TextLabel", Colorpicker["8c"])
+					Colorpicker["8d"]["TextWrapped"] = true
+					Colorpicker["8d"]["BorderSizePixel"] = 0
+					Colorpicker["8d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["8d"]["TextSize"] = 11
+					Colorpicker["8d"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["8d"]["Size"] = UDim2.new(0, 45, 0, 25)
+					Colorpicker["8d"]["BorderColor3"] = Color3.fromRGB(28, 43, 54)
+					Colorpicker["8d"]["Text"] = [[Hue]]
+					Colorpicker["8d"]["Font"] = Enum.Font.Gotham
+					Colorpicker["8d"]["BackgroundTransparency"] = 1
+					Colorpicker["8d"]["Position"] = UDim2.new(-0.0012891516089439392, 0, 0.13513514399528503, 0)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Hue.TextBox
+					Colorpicker["8e"] = Instance.new("TextBox", Colorpicker["8c"])
+					Colorpicker["8e"]["ZIndex"] = 5
+					Colorpicker["8e"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["8e"]["TextWrapped"] = true
+					Colorpicker["8e"]["TextSize"] = 11
+					Colorpicker["8e"]["BackgroundColor3"] = Color3.fromRGB(51, 51, 51)
+					Colorpicker["8e"]["Size"] = UDim2.new(0, 42, 0, 18)
+					Colorpicker["8e"]["Text"] = [[256]]
+					Colorpicker["8e"]["Position"] = UDim2.new(0.4914590120315552, 0, 0.25, 0)
+					Colorpicker["8e"]["Font"] = Enum.Font.Gotham
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Red.TextBox.UICorner
+					Colorpicker["8f"] = Instance.new("UICorner", Colorpicker["8e"])
+					Colorpicker["8f"]["CornerRadius"] = UDim.new(0, 4)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.UIListLayout
+					Colorpicker["90"] = Instance.new("UIListLayout", Colorpicker["8b"])
+					Colorpicker["90"]["FillDirection"] = Enum.FillDirection.Horizontal
+					Colorpicker["90"]["SortOrder"] = Enum.SortOrder.LayoutOrder
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Sat
+					Colorpicker["91"] = Instance.new("Frame", Colorpicker["8b"])
+					Colorpicker["91"]["BorderSizePixel"] = 0
+					Colorpicker["91"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["91"]["BackgroundTransparency"] = 1
+					Colorpicker["91"]["Size"] = UDim2.new(0, 91, 0, 37)
+					Colorpicker["91"]["Name"] = [[Sat]]
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Sat.TextLabel
+					Colorpicker["92"] = Instance.new("TextLabel", Colorpicker["91"])
+					Colorpicker["92"]["TextWrapped"] = true
+					Colorpicker["92"]["BorderSizePixel"] = 0
+					Colorpicker["92"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["92"]["TextSize"] = 11
+					Colorpicker["92"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["92"]["Size"] = UDim2.new(0, 45, 0, 25)
+					Colorpicker["92"]["BorderColor3"] = Color3.fromRGB(28, 43, 54)
+					Colorpicker["92"]["Text"] = [[Sat]]
+					Colorpicker["92"]["Font"] = Enum.Font.Gotham
+					Colorpicker["92"]["BackgroundTransparency"] = 1
+					Colorpicker["92"]["Position"] = UDim2.new(-0.0012891516089439392, 0, 0.13513514399528503, 0)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Sat.TextBox
+					Colorpicker["93"] = Instance.new("TextBox", Colorpicker["91"])
+					Colorpicker["93"]["ZIndex"] = 5
+					Colorpicker["93"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["93"]["TextWrapped"] = true
+					Colorpicker["93"]["TextSize"] = 11
+					Colorpicker["93"]["BackgroundColor3"] = Color3.fromRGB(51, 51, 51)
+					Colorpicker["93"]["Size"] = UDim2.new(0, 42, 0, 18)
+					Colorpicker["93"]["Text"] = [[256]]
+					Colorpicker["93"]["Position"] = UDim2.new(0.4914590120315552, 0, 0.25, 0)
+					Colorpicker["93"]["Font"] = Enum.Font.Gotham
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Sat.TextBox.UICorner
+					Colorpicker["94"] = Instance.new("UICorner", Colorpicker["93"])
+					Colorpicker["94"]["CornerRadius"] = UDim.new(0, 4)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Value
+					Colorpicker["95"] = Instance.new("Frame", Colorpicker["8b"])
+					Colorpicker["95"]["BorderSizePixel"] = 0
+					Colorpicker["95"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["95"]["BackgroundTransparency"] = 1
+					Colorpicker["95"]["Size"] = UDim2.new(0, 91, 0, 37)
+					Colorpicker["95"]["Name"] = [[Value]]
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Value.TextLabel
+					Colorpicker["96"] = Instance.new("TextLabel", Colorpicker["95"])
+					Colorpicker["96"]["TextWrapped"] = true
+					Colorpicker["96"]["BorderSizePixel"] = 0
+					Colorpicker["96"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["96"]["TextSize"] = 11
+					Colorpicker["96"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["96"]["Size"] = UDim2.new(0, 45, 0, 25)
+					Colorpicker["96"]["BorderColor3"] = Color3.fromRGB(28, 43, 54)
+					Colorpicker["96"]["Text"] = [[Value]]
+					Colorpicker["96"]["Font"] = Enum.Font.Gotham
+					Colorpicker["96"]["BackgroundTransparency"] = 1
+					Colorpicker["96"]["Position"] = UDim2.new(-0.0012891516089439392, 0, 0.13513514399528503, 0)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Value.TextBox
+					Colorpicker["97"] = Instance.new("TextBox", Colorpicker["95"])
+					Colorpicker["97"]["ZIndex"] = 5
+					Colorpicker["97"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["97"]["TextWrapped"] = true
+					Colorpicker["97"]["TextSize"] = 11
+					Colorpicker["97"]["BackgroundColor3"] = Color3.fromRGB(51, 51, 51)
+					Colorpicker["97"]["Size"] = UDim2.new(0, 42, 0, 18)
+					Colorpicker["97"]["Text"] = [[256]]
+					Colorpicker["97"]["Position"] = UDim2.new(0.4914590120315552, 0, 0.25, 0)
+					Colorpicker["97"]["Font"] = Enum.Font.Gotham
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HSVHolder.Value.TextBox.UICorner
+					Colorpicker["98"] = Instance.new("UICorner", Colorpicker["97"])
+					Colorpicker["98"]["CornerRadius"] = UDim.new(0, 4)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HexTextbox
+					Colorpicker["99"] = Instance.new("Frame", Colorpicker["7d"])
+					Colorpicker["99"]["ZIndex"] = 5
+					Colorpicker["99"]["BorderSizePixel"] = 0
+					Colorpicker["99"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["99"]["BackgroundTransparency"] = 1
+					Colorpicker["99"]["Size"] = UDim2.new(0, 91, 0, 37)
+					Colorpicker["99"]["Position"] = UDim2.new(0, 300, 0, 192)
+					Colorpicker["99"]["Name"] = [[HexTextbox]]
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HexTextbox.TextLabel
+					Colorpicker["9a"] = Instance.new("TextLabel", Colorpicker["99"])
+					Colorpicker["9a"]["TextWrapped"] = true
+					Colorpicker["9a"]["BorderSizePixel"] = 0
+					Colorpicker["9a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["9a"]["TextSize"] = 11
+					Colorpicker["9a"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["9a"]["Size"] = UDim2.new(0, 64, 0, 25)
+					Colorpicker["9a"]["BorderColor3"] = Color3.fromRGB(28, 43, 54)
+					Colorpicker["9a"]["Text"] = [[Hex Code]]
+					Colorpicker["9a"]["Font"] = Enum.Font.Gotham
+					Colorpicker["9a"]["BackgroundTransparency"] = 1
+					Colorpicker["9a"]["Position"] = UDim2.new(-0.14590352773666382, 0, 0.13513512909412384, 0)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HexTextbox.TextBox
+					Colorpicker["9b"] = Instance.new("TextBox", Colorpicker["99"])
+					Colorpicker["9b"]["CursorPosition"] = -1
+					Colorpicker["9b"]["ZIndex"] = 5
+					Colorpicker["9b"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["9b"]["TextWrapped"] = true
+					Colorpicker["9b"]["TextSize"] = 11
+					Colorpicker["9b"]["BackgroundColor3"] = Color3.fromRGB(51, 51, 51)
+					Colorpicker["9b"]["Size"] = UDim2.new(0, 63, 0, 18)
+					Colorpicker["9b"]["Text"] = [[#f1eaff]]
+					Colorpicker["9b"]["Position"] = UDim2.new(0.5354151725769043, 0, 0.25, 0)
+					Colorpicker["9b"]["Font"] = Enum.Font.Gotham
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.HexTextbox.TextBox.UICorner
+					Colorpicker["9c"] = Instance.new("UICorner", Colorpicker["9b"])
+					Colorpicker["9c"]["CornerRadius"] = UDim.new(0, 4)
+
+					-- StarterGui.Vision Lib v2.GuiFrame.MainFrame.Container.SectionFrame.SectionContainer.Colorpicker.ToggleDetector
+					Colorpicker["9d"] = Instance.new("TextButton", Colorpicker["7d"])
+					Colorpicker["9d"]["TextSize"] = 14
+					Colorpicker["9d"]["TextTransparency"] = 1
+					Colorpicker["9d"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+					Colorpicker["9d"]["TextColor3"] = Color3.fromRGB(0, 0, 0)
+					Colorpicker["9d"]["Size"] = UDim2.new(0, 423, 0, 34)
+					Colorpicker["9d"]["Name"] = [[ToggleDetector]]
+					Colorpicker["9d"]["Font"] = Enum.Font.SourceSans
+					Colorpicker["9d"]["BackgroundTransparency"] = 1
+				end
+				
+				Colorpicker["7d"]:GetPropertyChangedSignal("Size"):Connect(function()
+					Library:ResizeSection(Section["1e"])
+				end)	
+				
+				-- Methods
+				do
+					function Colorpicker:UpdateColorPicker()
+						Library:Tween(Colorpicker["88"], {
+							Length = 0.5,
+							Goal = {BackgroundColor3 = Color3.fromHSV(Colorpicker.ColorH, Colorpicker.ColorS, Colorpicker.ColorV)}
+						})
+
+						Library:Tween(Colorpicker["84"], {
+							Length = 0.5,
+							Goal = {BackgroundColor3 = Color3.fromHSV(Colorpicker.ColorH, 1, 1)}
+						})
+						pcall(function()
+							if Colorpicker.OldVal ~= Color3.fromHSV(Colorpicker.ColorH, Colorpicker.ColorS, Colorpicker.ColorV) then
+								options.Callback(Color3.fromHSV(Colorpicker.ColorH, Colorpicker.ColorS, Colorpicker.ColorV))
+							end
+						end)
+						Colorpicker.OldVal = Color3.fromHSV(Colorpicker.ColorH, Colorpicker.ColorS, Colorpicker.ColorV)
+						Colorpicker:updateTextboxVal()
+					end
+
+					function Colorpicker:SetColor(Color)
+						local H, S, V = Color:ToHSV()
+						Colorpicker.ColorH = H
+						Colorpicker.ColorS = S
+						Colorpicker.ColorV = V
+
+						Library:Tween(Colorpicker["82"], {
+							Length = 0.5,
+							Goal = {Position = UDim2.new(-0.357, 0, H, 0)}
+						})
+
+						local VisualColorY = 1 - Colorpicker.ColorV
+
+						Library:Tween(Colorpicker["86"], {
+							Length = 0.5,
+							Goal = {Position = UDim2.new(Colorpicker.ColorS, 0, VisualColorY, 0)}
+						})
+						Colorpicker:UpdateColorPicker()
+					end
+
+					function Colorpicker:updateTextboxVal()
+						Colorpicker["8e"]["Text"] = math.floor(Colorpicker.ColorH*256)
+						Colorpicker["93"]["Text"] = math.floor(Colorpicker.ColorS*256)
+						Colorpicker["97"]["Text"] = math.floor(Colorpicker.ColorV*256)
+
+						Colorpicker["9b"].Text = Colorpicker.OldVal:ToHex()
+					end
+				end
+
+				-- Handler
+				do
+					Colorpicker["7d"].MouseEnter:Connect(function()
+						Library:Tween(Colorpicker["4a"], {
+							Length = 0.5,
+							Goal = {Color = Color3.fromRGB(65, 65, 65)}
+						})
+					end)
+
+					Colorpicker["7d"].MouseLeave:Connect(function()
+						Library:Tween(Colorpicker["4a"], {
+							Length = 0.5,
+							Goal = {Color = Color3.fromRGB(43, 43, 43)}
+						})
+					end)
+					
+					Colorpicker.ColorH = 1 - (1 - math.clamp(Colorpicker["82"].AbsolutePosition.Y - Colorpicker["7f"].AbsolutePosition.Y, 0, Colorpicker["7f"].AbsoluteSize.Y) / Colorpicker["7f"].AbsoluteSize.Y)
+					Colorpicker.ColorS = (math.clamp(Colorpicker["86"].AbsolutePosition.X - Colorpicker["84"].AbsolutePosition.X, 0, Colorpicker["84"].AbsoluteSize.X) / Colorpicker["84"].AbsoluteSize.X)
+					Colorpicker.ColorV = 1 - (math.clamp(Colorpicker["86"].AbsolutePosition.Y - Colorpicker["84"].AbsolutePosition.Y, 0, Colorpicker["84"].AbsoluteSize.Y) / Colorpicker["84"].AbsoluteSize.Y)
+					
+					Colorpicker["9d"].MouseButton1Click:Connect(function()
+						Colorpicker.Toggled = not Colorpicker.Toggled
+						
+						if Colorpicker.Toggled then
+							Library:Tween(Colorpicker["86"], {
+								Length = 0.5,
+								Goal = {ImageTransparency = 0}
+							})
+							
+							Library:Tween(Colorpicker["7d"], {
+								Length = 0.5,
+								Goal = {Size = UDim2.fromOffset(423, 231)}
+							})
+						else
+							Library:Tween(Colorpicker["86"], {
+								Length = 0.5,
+								Goal = {ImageTransparency = 1}
+							})
+							
+							Library:Tween(Colorpicker["7d"], {
+								Length = 0.5,
+								Goal = {Size = UDim2.fromOffset(423, 35)}
+							})
+						end
+					end)
+					
+					local SelectingColor
+					
+					Colorpicker["84"].InputBegan:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.MouseButton1 then
+							if SelectingColor then
+								SelectingColor:Disconnect()
+							end
+							
+							Library.Sliding = true
+							SelectingColor = RunService.RenderStepped:Connect(function()
+								local ColorX = (math.clamp(Mouse.X - Colorpicker["84"].AbsolutePosition.X, 0, Colorpicker["84"].AbsoluteSize.X) / Colorpicker["84"].AbsoluteSize.X)
+								local ColorY = (math.clamp(Mouse.Y - Colorpicker["84"].AbsolutePosition.Y, 0, Colorpicker["84"].AbsoluteSize.Y) / Colorpicker["84"].AbsoluteSize.Y)
+								Colorpicker["86"].Position = UDim2.new(ColorX, 0, ColorY, 0)
+								Colorpicker.ColorS = ColorX
+								Colorpicker.ColorV = 1 - ColorY
+								Colorpicker:UpdateColorPicker()
+							end)
+						end
+					end)
+					
+					Colorpicker["84"].InputEnded:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.MouseButton1 then
+							if SelectingColor then
+								SelectingColor:Disconnect()
+							end
+							Library.Sliding = false
+						end
+					end)
+					
+					local SelectingHue
+					
+					Colorpicker["7f"].InputBegan:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.MouseButton1 then
+							if SelectingHue then
+								SelectingHue:Disconnect()
+							end
+							
+							Library.Sliding = true
+							SelectingHue = RunService.RenderStepped:Connect(function()
+								local HueY = (1 - math.clamp(Mouse.Y - Colorpicker["7f"].AbsolutePosition.Y, 0, Colorpicker["7f"].AbsoluteSize.Y) / Colorpicker["7f"].AbsoluteSize.Y)
+								local VisualHueY = (math.clamp(Mouse.Y - Colorpicker["7f"].AbsolutePosition.Y, 0, Colorpicker["7f"].AbsoluteSize.Y) / Colorpicker["7f"].AbsoluteSize.Y)
+
+								Colorpicker["82"].Position = UDim2.new(-0.357, 0, VisualHueY, 0)
+								Colorpicker.ColorH = 1 - HueY
+
+								Colorpicker:UpdateColorPicker()
+							end)
+						end
+					end)
+					
+					Colorpicker["7f"].InputEnded:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.MouseButton1 then
+							if SelectingHue then
+								SelectingHue:Disconnect()
+							end
+							Library.Sliding = false
+						end
+					end)
+					
+					local function checkHex(hex)
+						local success, result = pcall(function()
+							return Color3.fromHex(hex)
+						end)
+						
+						return success
+					end
+					
+					local function checkValidHSV(hsv)
+						print(hsv)
+						if hsv >= 0 and hsv <= 1 then
+							return true
+						else
+							return false
+						end
+					end
+					
+					Colorpicker["9b"].FocusLost:Connect(function()
+						local HexCode = Colorpicker["9b"].Text
+						local isHex = checkHex(HexCode)
+						if isHex then
+							Colorpicker:SetColor(Color3.fromHex(HexCode))
+						else
+							Colorpicker:updateTextboxVal()
+						end
+					end)
+					
+					Colorpicker["8e"].FocusLost:Connect(function()
+						local numVal
+						local success = pcall(function()
+							local ColorCode = tonumber(Colorpicker["8e"].Text)
+							ColorCode = ColorCode/256
+							local valid = checkValidHSV(ColorCode)
+
+							if valid then
+								Colorpicker:SetColor(Color3.fromHSV(ColorCode, Colorpicker.ColorS, Colorpicker.ColorV))
+							else
+								Colorpicker:updateTextboxVal()
+							end
+						end)
+						
+						if not success then
+							Colorpicker:updateTextboxVal()
+						end
+					end)
+					
+					Colorpicker["93"].FocusLost:Connect(function()
+						local numVal
+						local success = pcall(function()
+							local ColorCode = tonumber(Colorpicker["93"].Text)
+							ColorCode = ColorCode/256
+							local valid = checkValidHSV(ColorCode)
+
+							if valid then
+								Colorpicker:SetColor(Color3.fromHSV(Colorpicker.ColorH, ColorCode, Colorpicker.ColorV))
+							else
+								Colorpicker:updateTextboxVal()
+							end
+						end)
+
+						if not success then
+							Colorpicker:updateTextboxVal()
+						end
+					end)
+					
+					Colorpicker["97"].FocusLost:Connect(function()
+						local numVal
+						local success = pcall(function()
+							local ColorCode = tonumber(Colorpicker["97"].Text)
+							ColorCode = ColorCode/256
+							local valid = checkValidHSV(ColorCode)
+
+							if valid then
+								Colorpicker:SetColor(Color3.fromHSV(Colorpicker.ColorH, Colorpicker.ColorS, ColorCode))
+							else
+								Colorpicker:updateTextboxVal()
+							end
+						end)
+
+						if not success then
+							Colorpicker:updateTextboxVal()
+						end
+					end)
+				end
+				
+				Colorpicker:SetColor(options.DefaultColor)
+				
+				task.spawn(function()
+					Library:ResizeSection(Section["1e"])
+					Library:ResizeCanvas(Tab["1d"])
+				end)
+				return Colorpicker
 			end
 			
 			--[[
@@ -2494,28 +3094,19 @@ function Library:Create(options)
 					
 				end
 
-				task.spawn(function()
-					Library:ResizeSection(Section["1e"])
-					task.wait(1)
-					Library:ResizeCanvas(Tab["1d"])
-				end)
-
 				return Template
 			end
 			]]--
-			
-			task.spawn(function()
-				Library:ResizeSection(Section["1e"])
-				task.wait(1)
-				Library:ResizeCanvas(Tab["1d"])
-			end)
 			
 			return Section
 		end
 		
 		-- Handler
 		do	
+			local ToolTip
+			
 			Tab["8"].MouseEnter:Connect(function()
+				ToolTip = Library:ToolTip(options.Name)
 				Tab.Hover = true
 				
 				if not Tab.Active then
@@ -2527,6 +3118,7 @@ function Library:Create(options)
 			end)
 			
 			Tab["8"].MouseLeave:Connect(function()
+				ToolTip:Destroy()
 				Tab.Hover = false
 				
 				if not Tab.Active then
@@ -2677,6 +3269,8 @@ function Library:Create(options)
 				Tab:Activate()
 			end
 		end
+		
+		Library:ResizeTabCanvas()
 		
 		return Tab
 	end
