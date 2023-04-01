@@ -1758,6 +1758,9 @@ function Library:Create(options)
 
 				-- Methods
 				do
+					function Slider:Delete()
+						Slider["36"]:Destroy()
+					end
 					function Slider:SetValue(Value)
 						Value = math.floor(Value)
 
