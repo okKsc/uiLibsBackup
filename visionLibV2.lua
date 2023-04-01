@@ -2291,7 +2291,9 @@ function Library:Create(options)
 
 				-- Methods
 				do
-					
+					function Dropdown:Delete()
+						Dropdown["46"]:Destroy()
+					end
 					function Dropdown:AddItem(value)
 						local DropdownOption = {
 							Hover = false,
@@ -2495,6 +2497,9 @@ function Library:Create(options)
 
 				-- Methods
 				do
+					function Label:Delete()
+						Label["78"]:Destroy()
+					end
 					function Label:SetName(name)
 						Label["7b"]["Text"] = name
 						
