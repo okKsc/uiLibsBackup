@@ -1344,6 +1344,9 @@ function Library:Create(options)
 				
 				-- Methods
 				do
+				        function Button:Delete()
+						Button["74"]:Destroy()
+					end
 					function Button:SetName(name)
 						Button["77"]["Text"] = name
 					end
