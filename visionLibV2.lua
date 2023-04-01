@@ -1551,6 +1551,11 @@ function Library:Create(options)
 					function Toggle:SetName(name)
 						Toggle["2d"]["Text"] = name
 					end
+					function Toggle:Delete()
+						Toggle:Set(false)
+						wait()
+						Toggle["24"]:Destroy()
+					end
 				end
 				
 				Toggle:Set(options.Default)
