@@ -1228,6 +1228,7 @@ function Library:Create(options)
 			end)
 			
 			function Section:Button(options)
+				local buttonEnabled = true 
 				options = Library:Place_Defaults({
 					Name = "Button",
 					Callback = function() return end
@@ -1317,7 +1318,9 @@ function Library:Create(options)
 							-- Callback
 							do
 								task.spawn(function()
-									options.Callback()
+									if buttonEnabled then
+										options.Callback()
+									end
 								end)
 							end
 							
@@ -1345,6 +1348,7 @@ function Library:Create(options)
 				-- Methods
 				do
 				        function Button:Delete()
+						buttonEnabled = false
 						Button["74"]:Destroy()
 					end
 					function Button:SetName(name)
@@ -1365,6 +1369,7 @@ function Library:Create(options)
 			end
 			
 			function Section:Toggle(options)
+				local toggleEnabled = true
 				options = Library:Place_Defaults({
 					Name = "Toggle",
 					Default = false,
@@ -1532,7 +1537,9 @@ function Library:Create(options)
 						end
 						
 						task.spawn(function()
-							options.Callback(Toggle.Bool)
+							if toggleEnabled then
+								options.Callback(Toggle.Bool)
+							end
 						end)
 					end
 					
@@ -1554,6 +1561,7 @@ function Library:Create(options)
 					function Toggle:Delete()
 						Toggle:Set(false)
 						wait()
+						toggleEnabled = false
 						Toggle["24"]:Destroy()
 					end
 				end
@@ -1569,6 +1577,7 @@ function Library:Create(options)
 			end
 			
 			function Section:Slider(options)
+				local sliderEnabled = true
 				options = Library:Place_Defaults({
 					Name = "Slider",
 					Max = 100,
@@ -1734,7 +1743,7 @@ function Library:Create(options)
 								local Value = ((options.Max - options.Min) * percentage) + options.Min
 								Value = math.floor(Value)
 								
-								if Value ~= Slider.OldVal then
+								if Value ~= Slider.OldVal and sliderEnabled then
 									options.Callback(Value)
 								end
 								Slider.OldVal = Value
@@ -1759,6 +1768,7 @@ function Library:Create(options)
 				-- Methods
 				do
 					function Slider:Delete()
+						sliderEnabled = true
 						Slider["36"]:Destroy()
 					end
 					function Slider:SetValue(Value)
